@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DZS Scout Group | Official</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #0a2b0d;
+            --scout-green: #00e676;
+            --accent-yellow: #ffeb3b;
+            --active-blue: #2196f3;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #000;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- SHARED MODERN BACKGROUND --- */
+        #landingView, #homePortal { 
+            background: radial-gradient(circle at top left, #061f08 0%, #000 60%),
+                        radial-gradient(circle at bottom right, #041405 0%, #000 100%);
+            background-attachment: fixed; /* Keeps background still while scrolling */
+            min-height: 100vh;
+        }
+
+        /* --- LANDING PAGE --- */
+        #landingView { display: flex; flex-direction: column; align-items: center; padding: 60px 20px; }
+        .hero-title { font-size: 3.5rem; font-weight: 800; text-align: center; text-transform: uppercase; line-height: 1.1; }
+        .hero-title span { color: var(--accent-yellow); }
+        .hero-sub { letter-spacing: 6px; color: #888; margin-bottom: 50px; font-size: 0.9rem; text-align: center; }
+
+        .landing-grid { max-width: 1200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; width: 100%; }
+        .glass-card { 
+            background: var(--glass); backdrop-filter: blur(20px); 
+            border: 1px solid var(--glass-border); border-radius: 30px; 
+            padding: 40px; display: flex; flex-direction: column; transition: 0.4s;
+        }
+        .glass-card:hover { transform: translateY(-10px); border-color: var(--scout-green); box-shadow: 0 10px 30px rgba(0, 230, 118, 0.1); }
+        .glass-card h2 { font-size: 1.8rem; margin-bottom: 15px; color: var(--scout-green); }
+        .glass-card p { color: #ccc; font-size: 0.95rem; line-height: 1.6; margin-bottom: 30px; flex-grow: 1; }
+
+        .btn { display: block; width: 100%; padding: 16px; border-radius: 50px; font-weight: 800; text-align: center; border: none; cursor: pointer; text-transform: uppercase; transition: 0.3s; }
+        .btn-blue { background: var(--active-blue); color: white; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3); }
+        .btn-yellow { background: var(--accent-yellow); color: black; box-shadow: 0 4px 15px rgba(255, 235, 59, 0.3); }
+
+        /* --- MODERN HOME PORTAL --- */
+        #homePortal { display: none; }
+        .portal-nav { 
+            padding: 20px 40px; background: rgba(0,0,0,0.6); backdrop-filter: blur(25px); 
+            border-bottom: 1px solid var(--glass-border); position: sticky; top: 0; z-index: 1000; 
+        }
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        
+        .sub-nav { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .nav-tab { 
+            padding: 10px 24px; border-radius: 25px; background: rgba(255,255,255,0.05); color: #888; 
+            cursor: pointer; font-size: 0.8rem; font-weight: 600; white-space: nowrap; 
+            border: 1px solid rgba(255,255,255,0.1); transition: 0.3s;
+        }
+        .nav-tab.active { background: var(--scout-green); color: black; border-color: var(--scout-green); }
+
+        /* --- FEED & POSTS --- */
+        .feed { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; padding: 30px 40px; max-width: 1400px; margin: 0 auto; }
+        .post-card { 
+            background: rgba(255,255,255,0.03); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-radius: 28px; 
+            padding: 20px; position: relative; transition: 0.3s; 
+        }
+        .post-card:hover { border-color: rgba(255,255,255,0.3); }
+        
+        .media-box { 
+            width: 100%; border-radius: 20px; overflow: hidden; margin-bottom: 18px; 
+            background: #000; border: 1px solid #1a1a1a; position: relative;
+        }
+        .media-box img { width: 100%; height: auto; display: block; object-fit: contain; max-height: 500px; }
+
+        /* --- UPLOAD PANEL --- */
+        #adminPanel { 
+            display: none; margin: 20px auto; max-width: 550px; 
+            background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(30px);
+            border: 1px solid var(--scout-green); padding: 30px; border-radius: 30px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        .up-input { 
+            width: 100%; padding: 14px; margin-bottom: 15px; background: rgba(255,255,255,0.05); 
+            border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 15px; outline: none; 
+        }
+
+        .del-btn { 
+            position: absolute; top: 15px; right: 15px; background: rgba(255, 82, 82, 0.2); 
+            color: #ff5252; border: 1px solid #ff5252; padding: 6px 14px; border-radius: 10px; 
+            cursor: pointer; font-size: 0.7rem; font-weight: 800; z-index: 10;
+        }
+
+        /* --- AUTH MODALS --- */
+        .auth-modal { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); 
+            z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(15px); 
+        }
+        .auth-box { 
+            background: #0a0a0a; padding: 45px; border-radius: 35px; width: 95%; 
+            max-width: 420px; border: 1px solid #222; text-align: center; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="landingView">
+        <h1 class="hero-title">DINAJPUR <span>ZILLA</span> SCHOOL</h1>
+        <p class="hero-sub">SCOUT GROUP | ESTD. 1972</p>
+
+        <div class="landing-grid">
+            <div class="glass-card">
+                <h2>Be Prepared</h2>
+                <p>Join the legacy of scouting and discipline. Explore our community activities and achievements.</p>
+                <button onclick="enterPortal('Guest', '', false)" class="btn btn-blue">Explore</button>
+            </div>
+            <div class="glass-card">
+                <h2>The Brotherhood</h2>
+                <p>Already a scout? Log in to your personal portal to see the latest updates and files.</p>
+                <button onclick="openAuth('login')" class="btn btn-yellow">Sign In</button>
+            </div>
+            <div class="glass-card">
+                <h2>Join Us</h2>
+                <p>New to the group? Create your account today to join the DZS Scout family.</p>
+                <button onclick="openAuth('signup')" class="btn btn-yellow">Sign Up</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="homePortal">
+        <nav class="portal-nav">
+            <div class="nav-header">
+                <div style="font-weight: 800; color: var(--scout-green); letter-spacing: 1px; font-size: 1.1rem;">DZS SCOUT PORTAL</div>
+                <div style="display: flex; gap: 20px; align-items: center;">
+                    <div id="userName" style="font-weight:600; font-size: 0.85rem; color: #888;"></div>
+                    <button onclick="location.reload()" style="background:none; border:none; color:#ff5252; cursor:pointer; font-size:0.75rem; font-weight:800; letter-spacing: 1px;">LOGOUT</button>
+                </div>
+            </div>
+            <div class="sub-nav">
+                <div class="nav-tab active" onclick="switchTab('home', this)">HOME</div>
+                <div class="nav-tab" onclick="switchTab('leaders', this)">LEADERS</div>
+                <div class="nav-tab" onclick="switchTab('promotions', this)">PROMOTIONS</div>
+                <div class="nav-tab" onclick="switchTab('leaks', this)">LEAKS</div>
+            </div>
+        </nav>
+
+        <div style="text-align: center; padding-top: 30px;">
+            <button id="postBtn" class="btn-yellow" style="padding: 12px 40px; width: auto; font-size: 0.9rem; border-radius: 15px;" onclick="togglePanel()">+ CREATE NEW POST</button>
+        </div>
+
+        <div id="adminPanel">
+            <h4 id="panelTitle" style="margin-bottom: 20px; color: var(--scout-green); text-transform: uppercase; letter-spacing: 1px;">Posting to HOME</h4>
+            <select id="upType" class="up-input" onchange="toggleInputs()">
+                <option value="text">Announcement (Text)</option>
+                <option value="image">Photo / Image (URL)</option>
+                <option value="pdf">Document (PDF URL)</option>
+                <option id="htmlOpt" value="html">Custom HTML / YouTube</option>
+            </select>
+            
+            <input type="text" id="upTitle" class="up-input" placeholder="Enter Title">
+            <input type="text" id="upUrl" class="up-input" placeholder="Paste Image or PDF Link" style="display:none;">
+            <textarea id="upCode" class="up-input" rows="6" style="display:none;" placeholder="Paste HTML or YouTube Embed code..."></textarea>
+            <textarea id="upDesc" class="up-input" rows="3" placeholder="Write a short description..."></textarea>
+            
+            <button onclick="handlePublish()" class="btn btn-yellow" style="border-radius: 15px;">Publish Post</button>
+        </div>
+
+        <div class="feed" id="mainFeed"></div>
+    </div>
+
+    <div id="loginModal" class="auth-modal">
+        <div class="auth-box">
+            <h2 style="color:var(--accent-yellow); margin-bottom:30px;">SIGN IN</h2>
+            <input type="email" id="lEmail" class="up-input" placeholder="Email Address">
+            <input type="password" id="lPass" class="up-input" placeholder="Password">
+            <button onclick="login()" class="btn btn-yellow">Login</button>
+            <div class="auth-toggle" onclick="openAuth('signup')" style="margin-top: 15px; color: #666; font-size: 0.8rem; cursor: pointer;">New here? <span style="color: var(--active-blue);">Create Account</span></div>
+            <button onclick="closeAuth()" style="background:none; border:none; color:#444; margin-top:20px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <div id="signupModal" class="auth-modal">
+        <div class="auth-box">
+            <h2 style="color:var(--active-blue); margin-bottom:30px;">SIGN UP</h2>
+            <input type="text" id="sName" class="up-input" placeholder="Your Name">
+            <input type="email" id="sEmail" class="up-input" placeholder="Email Address">
+            <input type="password" id="sPass" class="up-input" placeholder="Create Password">
+            <button onclick="signup()" class="btn btn-blue">Register</button>
+            <div class="auth-toggle" onclick="openAuth('login')" style="margin-top: 15px; color: #666; font-size: 0.8rem; cursor: pointer;">Already a member? <span style="color: var(--active-blue);">Login</span></div>
+            <button onclick="closeAuth()" style="background:none; border:none; color:#444; margin-top:20px; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const config = {
+            apiKey: "AIzaSyCaZSKkyE6nZnchLuCJ7WebMrcm1xel6UM",
+            authDomain: "dzs-scout-group.firebaseapp.com",
+            databaseURL: "https://dzs-scout-group-default-rtdb.firebaseio.com/",
+            projectId: "dzs-scout-group"
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database();
+
+        let isAdmin = false;
+        let activeTab = 'home';
+        const AD_EMAIL = "aymanc366@gmail.com";
+        const AD_PASS = "T.L.TOM.148.com";
+
+        function openAuth(m) { closeAuth(); document.getElementById(m+'Modal').style.display = 'flex'; }
+        function closeAuth() { document.querySelectorAll('.auth-modal').forEach(m => m.style.display='none'); }
+
+        function toggleInputs() {
+            const type = document.getElementById('upType').value;
+            document.getElementById('upUrl').style.display = (type === 'image' || type === 'pdf') ? 'block' : 'none';
+            document.getElementById('upCode').style.display = (type === 'html') ? 'block' : 'none';
+        }
+
+        function switchTab(tab, el) {
+            activeTab = tab;
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('panelTitle').innerText = "Posting to " + tab.toUpperCase();
+            document.getElementById('adminPanel').style.display = 'none';
+            loadPosts();
+        }
+
+        function login() {
+            const e = document.getElementById('lEmail').value;
+            const p = document.getElementById('lPass').value;
+            if(e === AD_EMAIL && p === AD_PASS) enterPortal("Admin Ayman", e, true);
+            else {
+                let users = JSON.parse(localStorage.getItem('dzsUsers') || '[]');
+                const u = users.find(user => user.email === e && user.pass === p);
+                if(u) enterPortal(u.name, u.email, false);
+                else alert("Account not found!");
+            }
+        }
+
+        function signup() {
+            const n = document.getElementById('sName').value, e = document.getElementById('sEmail').value, p = document.getElementById('sPass').value;
+            if(!n || !e || !p) return alert("Please fill everything");
+            let users = JSON.parse(localStorage.getItem('dzsUsers') || '[]');
+            users.push({ name: n, email: e, pass: p });
+            localStorage.setItem('dzsUsers', JSON.stringify(users));
+            alert("Account created!"); openAuth('login');
+        }
+
+        function enterPortal(name, email, admin) {
+            isAdmin = admin;
+            closeAuth();
+            document.getElementById('landingView').style.display = 'none';
+            document.getElementById('homePortal').style.display = 'block';
+            document.getElementById('userName').innerText = name;
+            document.getElementById('htmlOpt').style.display = admin ? 'block' : 'none';
+            loadPosts();
+        }
+
+        function togglePanel() {
+            if (!isAdmin && activeTab !== 'leaks') {
+                alert("Only Admins can post here. Check the LEAKS tab!");
+                return;
+            }
+            const p = document.getElementById('adminPanel');
+            p.style.display = p.style.display === 'block' ? 'none' : 'block';
+        }
+
+        async function handlePublish() {
+            const title = document.getElementById('upTitle').value;
+            if(!title) return alert("Title required");
+
+            await db.ref('posts/' + activeTab).push().set({
+                type: document.getElementById('upType').value,
+                title: title,
+                desc: document.getElementById('upDesc').value,
+                url: document.getElementById('upUrl').value,
+                code: document.getElementById('upCode').value,
+                author: document.getElementById('userName').innerText,
+                date: new Date().toLocaleDateString(),
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            });
+
+            document.getElementById('adminPanel').style.display = 'none';
+            ['upTitle','upUrl','upCode','upDesc'].forEach(i => document.getElementById(i).value = "");
+        }
+
+        function loadPosts() {
+            const feed = document.getElementById('mainFeed');
+            db.ref('posts/' + activeTab).orderByChild('timestamp').on('value', (snap) => {
+                feed.innerHTML = "";
+                let posts = [];
+                snap.forEach(c => { posts.push({ id: c.key, ...c.val() }); });
+                
+                posts.reverse().forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+                    let content = '';
+                    
+                    if(p.type === 'image') content = `<div class="media-box"><img src="${p.url}" alt="Post Image" onerror="this.src='https://via.placeholder.com/400x200?text=Image+Load+Error'"></div>`;
+                    else if(p.type === 'pdf') content = `<div class="media-box"><iframe src="${p.url}"></iframe></div>`;
+                    else if(p.type === 'html') content = `<div class="html-content">${p.code}</div>`;
+
+                    card.innerHTML = `
+                        ${isAdmin ? `<button class="del-btn" onclick="deletePost('${p.id}')">DELETE</button>` : ''}
+                        ${content}
+                        <h3 style="margin-top:12px; font-size:1.2rem;">${p.title}</h3>
+                        <p style="color:#bbb; font-size:0.85rem; margin-top:5px; line-height:1.5;">${p.desc}</p>
+                        <div style="display:flex; justify-content:space-between; margin-top:20px; color:#555; font-size:0.65rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                            <span>By ${p.author || 'Member'}</span>
+                            <span>${p.date}</span>
+                        </div>
+                    `;
+                    feed.appendChild(card);
+                });
+            });
+        }
+
+        function deletePost(id) { if(confirm("Permanently delete this post?")) db.ref('posts/' + activeTab + '/' + id).remove(); }
+    </script>
+</body>
+</html>
