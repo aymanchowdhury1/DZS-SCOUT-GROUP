@@ -43,3 +43,8 @@ SEO changes can improve discovery, but no site can guarantee first place in Goog
 ## Do not keyword-stuff
 
 Do not add hidden blocks containing hundreds of repeated search terms. Use the official name and common abbreviations naturally in visible content.
+
+
+## Site name and favicon update
+
+The homepage now declares the preferred Google site name as **Dinajpur Zilla School Scout Group**, with alternate names **DZS Scout Group**, **DZS Scout**, and **DZSSG** using WebSite structured data. The homepage also uses stable root-level `favicon.ico`, `favicon.png`, and `apple-touch-icon.png` files. Google controls the final search-result site name and favicon automatically; after deployment, request reindexing of the homepage and allow time for recrawling.
