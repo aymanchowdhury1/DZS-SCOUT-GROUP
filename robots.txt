@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /firebase-config.js
+Disallow: /database.rules.json
+Disallow: /SETUP.md
+Sitemap: https://dzsscoutgroup.eu.org/sitemap.xml

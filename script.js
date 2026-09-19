@@ -520,46 +520,12 @@
   bindMemberTypeLimit('profileMemberTypes');
 
   /* ==========================================================
-     ADMIN ATTENDANCE + DEVICE BIOMETRIC + SHOP
+     ADMIN ATTENDANCE + SHOP
   ========================================================== */
   var adminUsersCache = {};
-  var adminBiometricCache = {};
   var adminAttendanceCache = {};
   var shopProducts = [];
   var adminDataLoaded = false;
-
-  function isWebAuthnReady(){
-    return window.isSecureContext && !!window.PublicKeyCredential && !!navigator.credentials;
-  }
-
-  function bytesToBase64Url(bytes){
-    var str = '';
-    for (var i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
-    return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  }
-  function arrayBufferToBase64Url(buf){ return bytesToBase64Url(new Uint8Array(buf)); }
-  function base64UrlToBytes(input){
-    var pad = '='.repeat((4 - (input.length % 4)) % 4);
-    var b64 = input.replace(/-/g,'+').replace(/_/g,'/') + pad;
-    var raw = atob(b64), out = new Uint8Array(raw.length);
-    for (var i=0;i<raw.length;i++) out[i] = raw.charCodeAt(i);
-    return out;
-  }
-  function randomBytes(len){
-    var bytes = new Uint8Array(len);
-    crypto.getRandomValues(bytes);
-    return bytes;
-  }
-  function webAuthnUserId(uid){ return new TextEncoder().encode(uid); }
-  function credentialMatchesStored(cred, storedId){
-    return cred && cred.rawId && arrayBufferToBase64Url(cred.rawId) === storedId;
-  }
-  function uvFlagPresent(assertionResponse){
-    try{
-      var data = new Uint8Array(assertionResponse.authenticatorData);
-      return data.length > 32 && (data[32] & 0x04) === 0x04;
-    }catch(e){ return false; }
-  }
 
   function dhakaDateParts(dateObj){
     var parts = new Intl.DateTimeFormat('en-GB', {
@@ -582,140 +548,45 @@
     var p = iso.split('-');
     return p[2] + '/' + p[1] + '/' + p[0];
   }
-
-  var biometricRing = document.getElementById('biometricRing');
-
-  function setBiometricModal(open, title, subtitle, userLabel, message, working){
-    var overlay = document.getElementById('biometricOverlay');
-    var titleEl = document.getElementById('biometricTitle');
-    var subtitleEl = document.getElementById('biometricSubtitle');
-    var userEl = document.getElementById('biometricUser');
-    var messageEl = document.getElementById('biometricMessage');
-    var ring = document.getElementById('biometricRing');
-    var start = document.getElementById('biometricStart');
-    if (!overlay) return;
-    if (titleEl) titleEl.textContent = title || 'Fingerprint Attendance';
-    if (subtitleEl) subtitleEl.textContent = subtitle || '';
-    if (userEl) userEl.textContent = userLabel || '';
-    if (messageEl) messageEl.textContent = message || '';
-    if (ring) ring.classList.toggle('is-working', !!working);
-    overlay.classList.toggle('is-open', !!open);
-    document.body.style.overflow = open ? 'hidden' : '';
+  function selectedPdfPeriod(){
+    var el = document.getElementById('attendancePdfPeriod');
+    return el ? el.value : 'month';
   }
-  function closeBiometricModal(){ setBiometricModal(false); }
-
-  async function setupFingerprintForUser(uid){
-    if (!auth || !auth.isAdmin){ showToast('Only the administrator can set fingerprints.'); return; }
-    if (!firebaseReady){ showToast('Firebase must be connected before fingerprint setup can be saved.'); return; }
-    if (!isWebAuthnReady()){
-      showToast('Fingerprint setup needs HTTPS or localhost and a device/browser with WebAuthn support.');
-      return;
-    }
+  function selectedPdfYear(){
+    var el = document.getElementById('attendancePdfYear');
+    var year = Number(el && el.value);
+    return year >= 2000 && year <= 2100 ? year : Number(dhakaDateParts(new Date()).year);
+  }
+  function markPresentForUser(uid){
+    if (!auth || !auth.isAdmin){ showToast('Only the administrator can mark attendance.'); return; }
+    if (!firebaseReady){ showToast('Firebase must be connected before attendance can be saved.'); return; }
     var user = adminUsersCache[uid];
     if (!user){ showToast('User record not found.'); return; }
-    var existing = adminBiometricCache[uid];
-    var actionTitle = existing ? 'Change Fingerprint' : 'Fingerprint Setup';
-    setBiometricModal(true, actionTitle, existing ? 'Replacing the registered device credential' : 'Registering this exact device', user.username || user.email, 'Follow the on-screen device prompt and complete fingerprint/user verification.', false);
-    try{
-      var challenge = randomBytes(32);
-      var credential = await navigator.credentials.create({
-        publicKey:{
-          challenge:challenge,
-          rp:{name:'Dinajpur Zilla School Scout Group', id:location.hostname},
-          user:{id:webAuthnUserId(uid), name:user.username || user.email, displayName:user.username || user.email},
-          pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
-          authenticatorSelection:{authenticatorAttachment:'platform', userVerification:'required', residentKey:'required', requireResidentKey:true},
-          timeout:60000,
-          attestation:'none'
-        }
-      });
-      if (!credential) throw new Error('No credential was created.');
-      var credentialId = arrayBufferToBase64Url(credential.rawId);
-      await fbDb.ref('biometric/' + uid).set({
-        credentialId:credentialId,
-        origin:location.origin,
-        registeredAt:firebase.database.ServerValue.TIMESTAMP,
-        method:'WebAuthn platform user verification'
-      });
-      adminBiometricCache[uid] = {credentialId:credentialId, origin:location.origin, registeredAt:Date.now(), method:'WebAuthn platform user verification'};
-      closeBiometricModal();
-      showToast(existing ? 'Fingerprint changed for ' + (user.username || user.email) + '.' : 'Fingerprint setup complete for ' + (user.username || user.email) + '.');
-      renderAdminUsers();
-    }catch(err){
-      closeBiometricModal();
-      var msg = err && err.name === 'NotAllowedError' ? 'Fingerprint setup was cancelled or rejected by the device.' : (err.message || 'Fingerprint setup failed.');
-      showToast(msg);
-    }
-  }
-
-  async function startAttendanceCheck(){
-    if (!auth || !auth.isAdmin){ showToast('Only the administrator can start attendance.'); return; }
-    if (!firebaseReady){ showToast('Firebase must be connected before attendance can be saved.'); return; }
-    if (!isWebAuthnReady()){ showToast('This browser/device does not support the biometric check.'); return; }
-
-    var credentialOwners = {};
-    Object.keys(adminBiometricCache).forEach(function(uid){
-      var bio = adminBiometricCache[uid];
-      if (bio && bio.credentialId) credentialOwners[bio.credentialId] = uid;
-    });
-    if (!Object.keys(credentialOwners).length){
-      showToast('No fingerprints have been registered yet. Use Fingerprint Setup beside a member first.');
+    var today = dhakaISODate();
+    if (adminAttendanceCache[uid] && adminAttendanceCache[uid][today]){
+      showToast((user.username || user.email) + ' is already present today.');
       return;
     }
-
-    setBiometricModal(true, 'Attendance Check', 'Any registered member can check in', '', 'Place a registered finger on the device. The system will identify the matching member automatically.', false);
-
-    try{
-      var challenge = randomBytes(32);
-      var credential = await navigator.credentials.get({
-        publicKey:{
-          challenge:challenge,
-          rpId:location.hostname,
-          allowCredentials:[],
-          userVerification:'required',
-          timeout:60000
-        }
-      });
-      if (!credential || !credential.response || !credential.rawId) throw new Error('No biometric credential was returned.');
-      var returnedId = arrayBufferToBase64Url(credential.rawId);
-      var uid = credentialOwners[returnedId];
-      if (!uid) throw new Error('That fingerprint is not registered for this group. Attendance was not recorded.');
-      if (!uvFlagPresent(credential.response)) throw new Error('The device did not report user verification. Attendance was not recorded.');
-      var user = adminUsersCache[uid];
-      if (!user) throw new Error('The matched user profile could not be found. Attendance was not recorded.');
-
-      var today = dhakaISODate();
-      if (adminAttendanceCache[uid] && adminAttendanceCache[uid][today]){
-        closeBiometricModal();
-        showToast((user.username || user.email) + ' is already present today.');
-        return;
-      }
-      var record = {
-        date:today,
-        username:user.username || '',
-        email:user.email || '',
-        mobile:user.mobile || '',
-        className:user.className || '',
-        roll:user.roll || '',
-        memberTypes:normalizeMemberTypes(user.memberTypes || []),
-        verifiedBy:auth.email,
-        verification:'WebAuthn user verification',
-        recordedAt:firebase.database.ServerValue.TIMESTAMP
-      };
-      await fbDb.ref('attendance/' + uid + '/' + today).set(record);
+    var record = {
+      date:today,
+      username:user.username || '',
+      email:user.email || '',
+      mobile:user.mobile || '',
+      className:user.className || '',
+      roll:user.roll || '',
+      memberTypes:normalizeMemberTypes(user.memberTypes || []),
+      markedBy:auth.email,
+      verification:'Manual admin attendance',
+      recordedAt:firebase.database.ServerValue.TIMESTAMP
+    };
+    fbDb.ref('attendance/' + uid + '/' + today).set(record).then(function(){
       if (!adminAttendanceCache[uid]) adminAttendanceCache[uid] = {};
       adminAttendanceCache[uid][today] = {recordedAt:Date.now(), verification:record.verification};
-      closeBiometricModal();
       renderAdminUsers();
       showToast((user.username || user.email) + ' marked present for ' + prettyDate(today) + '.');
-      generateAttendancePDF(true);
-    }catch(err){
-      closeBiometricModal();
-      var msg = err && err.name === 'NotAllowedError'
-        ? 'Fingerprint verification failed or was cancelled. Attendance was not recorded.'
-        : (err.message || 'Fingerprint verification failed. Attendance was not recorded.');
-      showToast(msg);
-    }
+    }).catch(function(err){
+      showToast('Could not save attendance: ' + err.message);
+    });
   }
 
   async function loadAdminAttendanceData(){
@@ -723,7 +594,6 @@
     try{
       var snapshots = await Promise.all([
         fbDb.ref('users').once('value'),
-        fbDb.ref('biometric').once('value'),
         fbDb.ref('attendance').once('value')
       ]);
       adminUsersCache = {};
@@ -735,10 +605,6 @@
           profileImageURL:d.profileImageURL || ''
         };
       });
-
-      // Guarantee that the currently logged-in administrator appears even
-      // when the Firebase Authentication account was created before this
-      // profile system was added.
       if (currentFirebaseUser && !adminUsersCache[currentFirebaseUser.uid]) {
         adminUsersCache[currentFirebaseUser.uid] = {
           uid:currentFirebaseUser.uid,
@@ -748,9 +614,7 @@
           mobile:'', className:'', roll:'', memberTypes:['MEMBER'], profileImageURL:''
         };
       }
-
-      adminBiometricCache = snapshots[1].val() || {};
-      adminAttendanceCache = snapshots[2].val() || {};
+      adminAttendanceCache = snapshots[1].val() || {};
       adminDataLoaded = true;
       renderAdminUsers();
     }catch(err){
@@ -762,13 +626,13 @@
     var el = document.getElementById('attendanceSummary');
     if (!el) return;
     var users = Object.keys(adminUsersCache).length;
-    var configured = Object.keys(adminBiometricCache).filter(function(uid){ return adminBiometricCache[uid] && adminBiometricCache[uid].credentialId; }).length;
     var today = dhakaISODate();
     var present = Object.keys(adminAttendanceCache).filter(function(uid){ return adminAttendanceCache[uid] && adminAttendanceCache[uid][today]; }).length;
+    var year = dhakaDateParts(new Date()).year;
     el.innerHTML =
       '<div class="attendance-stat"><span class="attendance-stat__value">' + users + '</span><span class="attendance-stat__label">Registered users</span></div>' +
-      '<div class="attendance-stat"><span class="attendance-stat__value">' + configured + '</span><span class="attendance-stat__label">Fingerprint ready</span></div>' +
-      '<div class="attendance-stat"><span class="attendance-stat__value">' + present + '</span><span class="attendance-stat__label">Present today</span></div>';
+      '<div class="attendance-stat"><span class="attendance-stat__value">' + present + '</span><span class="attendance-stat__label">Present today</span></div>' +
+      '<div class="attendance-stat"><span class="attendance-stat__value">' + year + '</span><span class="attendance-stat__label">Current PDF year</span></div>';
   }
 
   function renderAdminUsers(){
@@ -776,17 +640,16 @@
     var empty = document.getElementById('attendanceEmpty');
     if (!body) return;
     var ids = Object.keys(adminUsersCache).sort(function(a,b){ return (adminUsersCache[a].username || '').localeCompare(adminUsersCache[b].username || ''); });
-    empty.hidden = ids.length !== 0;
+    if (empty) empty.hidden = ids.length !== 0;
     renderAttendanceSummary();
+    var today = dhakaISODate();
     body.innerHTML = ids.map(function(uid){
-      var u = adminUsersCache[uid], bio = adminBiometricCache[uid], today = dhakaISODate();
-      var hasBio = !!(bio && bio.credentialId);
-      var isPresent = !!(adminAttendanceCache[uid] && adminAttendanceCache[uid][today]);
+      var u = adminUsersCache[uid], isPresent = !!(adminAttendanceCache[uid] && adminAttendanceCache[uid][today]);
       var lastDates = adminAttendanceCache[uid] ? Object.keys(adminAttendanceCache[uid]).sort().reverse() : [];
       var last = lastDates[0] || '';
-      var fingerprintBtn = hasBio
-        ? '<button class="admin-action-btn admin-action-btn--gold" data-biometric="' + uid + '">Change Fingerprint</button>'
-        : '<button class="admin-action-btn admin-action-btn--gold" data-biometric="' + uid + '">Fingerprint Setup</button>';
+      var attendanceBtn = isPresent
+        ? '<button class="admin-action-btn admin-action-btn--green" disabled>Present</button>'
+        : '<button class="admin-action-btn admin-action-btn--gold" data-attendance="' + uid + '">Attendance</button>';
       var status = isPresent
         ? '<span class="status-chip status-chip--present">Present today</span>'
         : '<span class="status-chip status-chip--muted">' + (last ? 'Last: ' + prettyDate(last) : 'Not attended yet') + '</span>';
@@ -803,79 +666,114 @@
         '<td>' + escapeHTML(u.className || '') + '</td>' +
         '<td>' + escapeHTML(u.roll || '') + '</td>' +
         '<td>' + escapeHTML(normalizeMemberTypes(u.memberTypes || []).join(' / ')) + '</td>' +
-        '<td><div class="admin-action-group">' + fingerprintBtn + '</div></td>' +
+        '<td><div class="admin-action-group">' + attendanceBtn + '</div></td>' +
         '<td>' + status + '</td>' +
       '</tr>';
     }).join('');
   }
 
-  async function generateAttendancePDF(autoDownload){
+  function buildMonthTable(doc, year, month, includeFutureDays){
+    var monthKey = year + '-' + String(month).padStart(2,'0');
+    var totalDays = daysInMonth(year, month);
+    var todayISO = dhakaISODate();
+    var daysToShow = totalDays;
+    var head = [['Name','Username','Email','Mobile','Class','Roll','Member Type']];
+    for (var d=1; d<=daysToShow; d++) head[0].push(String(d).padStart(2,'0'));
+    var rows = Object.keys(adminUsersCache).sort(function(a,b){ return (adminUsersCache[a].username || '').localeCompare(adminUsersCache[b].username || ''); }).map(function(uid){
+      var u = adminUsersCache[uid];
+      var row = [u.fullname || '', u.username || '', u.email || '', u.mobile || '', u.className || '', u.roll || '', normalizeMemberTypes(u.memberTypes || []).join(' / ')];
+      for (var day=1; day<=daysToShow; day++){
+        var iso = monthKey + '-' + String(day).padStart(2,'0');
+        var record = adminAttendanceCache[uid] && adminAttendanceCache[uid][iso];
+        if (record) row.push('P');
+        else if (!includeFutureDays && iso > todayISO) row.push('');
+        else row.push('-');
+      }
+      return row;
+    });
+    doc.autoTable({
+      head:head, body:rows, startY:24, margin:{left:10,right:10}, theme:'grid',
+      styles:{font:'helvetica',fontSize:5.1,cellPadding:1.0,halign:'center',valign:'middle'},
+      headStyles:{fontStyle:'bold',fontSize:5.3,halign:'center'},
+      columnStyles:{0:{cellWidth:29,halign:'left'},1:{cellWidth:25,halign:'left'},2:{cellWidth:47,halign:'left'},3:{cellWidth:23,halign:'left'},4:{cellWidth:17,halign:'left'},5:{cellWidth:11,halign:'left'},6:{cellWidth:23,halign:'left'}},
+      didParseCell:function(data){
+        if (data.section === 'body' && data.column.index >= 7){ data.cell.styles.fontStyle = data.cell.raw === 'P' ? 'bold' : 'normal'; }
+      }
+    });
+    return doc.lastAutoTable ? doc.lastAutoTable.finalY : 24;
+  }
+
+  async function generateAttendancePDF(){
     if (!auth || !auth.isAdmin){ showToast('Only the administrator can generate attendance PDFs.'); return; }
     if (!window.jspdf || !window.jspdf.jsPDF){ showToast('PDF library did not load. Check the internet connection and reload.'); return; }
     if (!adminDataLoaded) await loadAdminAttendanceData();
-    var monthKey = dhakaMonthKey(new Date());
-    var [year, month] = monthKey.split('-').map(Number);
-    var currentDay = Number(dhakaDateParts(new Date()).day);
-    var totalDays = daysInMonth(year, month);
-    var daysThroughToday = Math.min(currentDay, totalDays);
+
+    var period = selectedPdfPeriod();
+    var nowParts = dhakaDateParts(new Date());
+    var currentYear = Number(nowParts.year);
     var doc = new window.jspdf.jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+    doc.setProperties({title:'Dinajpur Zilla School Scout Group Attendance'});
+
+    if (period === 'year'){
+      var year = selectedPdfYear();
+      for (var month=1; month<=12; month++){
+        if (month > 1) doc.addPage();
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(14);
+        doc.text('Dinajpur Zilla School Scout Group - Attendance', 10, 12);
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(9);
+        doc.text(monthLabel(year + '-' + String(month).padStart(2,'0')), 10, 18);
+        doc.text('Year schedule: ' + year, 120, 18);
+        doc.text('Generated: ' + prettyDate(dhakaISODate()), 287, 18, {align:'right'});
+        buildMonthTable(doc, year, month, false);
+        doc.setFontSize(7);
+        doc.text('P = Present   - = No attendance record   Blank = future date not yet reached', 10, 198);
+      }
+      var yearFilename = 'attendance-' + year + '-full-year.pdf';
+      doc.save(yearFilename);
+      showToast('Year attendance PDF generated: ' + yearFilename);
+      return;
+    }
+
+    var monthKey = dhakaMonthKey(new Date());
+    var [y,m] = monthKey.split('-').map(Number);
     doc.setFont('helvetica','bold');
     doc.setFontSize(15);
     doc.text('Dinajpur Zilla School Scout Group - Attendance Sheet', 10, 12);
     doc.setFont('helvetica','normal');
     doc.setFontSize(9);
     doc.text(monthLabel(monthKey), 10, 18);
-    doc.text('Generated: ' + prettyDate(dhakaISODate()), 228, 18, {align:'right'});
-
-    var head = [['Name','Username','Email','Mobile','Class','Roll','Member Type']];
-    for (var d=1; d<=daysThroughToday; d++) head[0].push(String(d).padStart(2,'0'));
-    var rows = Object.keys(adminUsersCache).sort(function(a,b){ return (adminUsersCache[a].username || '').localeCompare(adminUsersCache[b].username || ''); }).map(function(uid){
-      var u = adminUsersCache[uid], row = [u.fullname || '', u.username || '', u.email || '', u.mobile || '', u.className || '', u.roll || '', normalizeMemberTypes(u.memberTypes || []).join(' / ')];
-      for (var day=1; day<=daysThroughToday; day++){
-        var iso = year + '-' + String(month).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-        row.push(adminAttendanceCache[uid] && adminAttendanceCache[uid][iso] ? 'P' : '-');
-      }
-      return row;
-    });
-    doc.autoTable({
-      head:head, body:rows, startY:24, margin:{left:10,right:10}, theme:'grid',
-      styles:{font:'helvetica',fontSize:5.4,cellPadding:1.1,halign:'center',valign:'middle'},
-      headStyles:{fontStyle:'bold',fontSize:5.7,halign:'center'},
-      columnStyles:{0:{cellWidth:31,halign:'left'},1:{cellWidth:27,halign:'left'},2:{cellWidth:54,halign:'left'},3:{cellWidth:26,halign:'left'},4:{cellWidth:18,halign:'left'},5:{cellWidth:12,halign:'left'},6:{cellWidth:24,halign:'left'}},
-      didParseCell:function(data){
-        if (data.section === 'body' && data.column.index >= 2){ data.cell.styles.fontStyle = data.cell.raw === 'P' ? 'bold' : 'normal'; }
-      }
-    });
-    var finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 8 : 210;
+    doc.text('Generated: ' + prettyDate(dhakaISODate()), 287, 18, {align:'right'});
+    buildMonthTable(doc, y, m, false);
     doc.setFontSize(7);
-    doc.text('P = Present   - = No attendance record for that date', 10, Math.min(finalY, 198));
+    doc.text('P = Present   - = No attendance record   Blank = future date not yet reached', 10, 198);
     var filename = 'attendance-' + monthKey + '.pdf';
     doc.save(filename);
-    if (!autoDownload) showToast('Attendance PDF generated: ' + filename);
+    showToast('Monthly attendance PDF generated: ' + filename);
   }
 
-  // Admin attendance button actions.
+  // Admin attendance and shop button actions.
   document.getElementById('main').addEventListener('click', function(e){
-    var bioBtn = e.target.closest('[data-biometric]');
+    var attendanceBtn = e.target.closest('[data-attendance]');
     var shopEdit = e.target.closest('[data-shop-edit]');
     var shopDelete = e.target.closest('[data-shop-delete]');
-    if (bioBtn){ setupFingerprintForUser(bioBtn.getAttribute('data-biometric')); return; }
+    if (attendanceBtn){ markPresentForUser(attendanceBtn.getAttribute('data-attendance')); return; }
     if (shopEdit){ openShopModal(shopEdit.getAttribute('data-shop-edit')); return; }
     if (shopDelete){ deleteShopProduct(shopDelete.getAttribute('data-shop-delete')); return; }
   });
 
   var refreshAttendanceBtn = document.getElementById('refreshAttendanceBtn');
   var generateAttendancePdfBtn = document.getElementById('generateAttendancePdfBtn');
+  var attendancePdfPeriod = document.getElementById('attendancePdfPeriod');
+  var attendancePdfYear = document.getElementById('attendancePdfYear');
+  if (attendancePdfYear) attendancePdfYear.value = dhakaDateParts(new Date()).year;
   if (refreshAttendanceBtn) refreshAttendanceBtn.addEventListener('click', loadAdminAttendanceData);
-  var startAttendanceBtn = document.getElementById('startAttendanceBtn');
-  if (startAttendanceBtn) startAttendanceBtn.addEventListener('click', startAttendanceCheck);
-  if (generateAttendancePdfBtn) generateAttendancePdfBtn.addEventListener('click', function(){ generateAttendancePDF(false); });
-
-  var biometricClose = document.getElementById('biometricClose');
-  if (biometricClose) biometricClose.addEventListener('click', closeBiometricModal);
-  var biometricOverlay = document.getElementById('biometricOverlay');
-  if (biometricOverlay) biometricOverlay.addEventListener('click', function(e){ if (e.target === biometricOverlay) closeBiometricModal(); });
-
+  if (generateAttendancePdfBtn) generateAttendancePdfBtn.addEventListener('click', generateAttendancePDF);
+  if (attendancePdfPeriod) attendancePdfPeriod.addEventListener('change', function(){
+    if (!attendancePdfYear) return;
+    attendancePdfYear.hidden = attendancePdfPeriod.value !== 'year';
+  });
 
   // Shop data and editor.
   function seedShop(){ return []; }

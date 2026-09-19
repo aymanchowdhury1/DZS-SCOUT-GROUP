@@ -23,22 +23,13 @@
       }
     },
 
-    "biometric": {
-      ".read": "auth != null && auth.token.email == 'aymanc366@gmail.com' && auth.token.email_verified == true",
-      "$uid": {
-        ".read": "auth != null && auth.token.email == 'aymanc366@gmail.com' && auth.token.email_verified == true",
-        ".write": "auth != null && auth.token.email == 'aymanc366@gmail.com' && auth.token.email_verified == true",
-        ".validate": "newData.hasChildren(['credentialId','origin','registeredAt','method']) && newData.child('credentialId').isString()"
-      }
-    },
-
     "attendance": {
       ".read": "auth != null && auth.token.email == 'aymanc366@gmail.com' && auth.token.email_verified == true",
       "$uid": {
         ".read": "auth != null && auth.token.email == 'aymanc366@gmail.com' && auth.token.email_verified == true",
         "$date": {
           ".write": "auth != null && auth.token.email == 'aymanc366@gmail.com' && auth.token.email_verified == true",
-          ".validate": "newData.hasChildren(['date','verifiedBy','verification','recordedAt']) && newData.child('date').isString() && newData.child('verification').isString()"
+          ".validate": "newData.hasChildren(['date','markedBy','verification','recordedAt']) && newData.child('date').isString() && newData.child('markedBy').isString() && newData.child('verification').isString()"
         }
       }
     },

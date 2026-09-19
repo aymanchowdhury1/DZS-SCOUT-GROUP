@@ -3,8 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dinajpur Zilla School Scout Group | Estd. 1972</title>
-<meta name="description" content="Official site of the Dinajpur Zilla School Scout Group — founded 1972. Leadership, rank promotions, resource library, and group bulletins.">
+<title>Dinajpur Zilla School Scout Group (DZS Scout / DZSSG) | Dinajpur, Bangladesh</title>
+<meta name="description" content="Official website of Dinajpur Zilla School Scout Group, also known as DZS Scout Group, DZS Scout and DZSSG, in Dinajpur, Bangladesh. Group leadership, promotions, books, notices, membership, attendance and shop.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://dzsscoutgroup.eu.org/">
+<meta name="author" content="Dinajpur Zilla School Scout Group">
+<meta name="application-name" content="DZS Scout Group">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Dinajpur Zilla School Scout Group (DZS Scout / DZSSG)">
+<meta property="og:description" content="Official website of Dinajpur Zilla School Scout Group (DZS Scout / DZSSG), Dinajpur, Bangladesh.">
+<meta property="og:url" content="https://dzsscoutgroup.eu.org/">
+<meta property="og:image" content="https://dzsscoutgroup.eu.org/assets/logo.png">
+<meta property="og:site_name" content="Dinajpur Zilla School Scout Group">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dinajpur Zilla School Scout Group (DZS Scout / DZSSG)">
+<meta name="twitter:description" content="Official website of Dinajpur Zilla School Scout Group (DZS Scout / DZSSG), Dinajpur, Bangladesh.">
+<meta name="twitter:image" content="https://dzsscoutgroup.eu.org/assets/logo.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Dinajpur Zilla School Scout Group",
+  "alternateName": [
+    "DZS Scout Group",
+    "DZS Scout",
+    "DZSSG",
+    "DZS"
+  ],
+  "url": "https://dzsscoutgroup.eu.org/",
+  "logo": "https://dzsscoutgroup.eu.org/assets/logo.png",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Dinajpur",
+    "addressCountry": "BD"
+  }
+}
+</script>
 
 <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -115,16 +151,29 @@
       <span class="eyebrow">Bangladesh Scouts &nbsp;·&nbsp; Dinajpur District</span>
       <h1>Purity. Knowledge.<br>Service to the Flame.</h1>
       <p class="hero__lede">
-        The Dinajpur Zilla School Scout Group has trained young citizens in
-        character, craft and community for over five decades. The white lotus,
-        the open book and the burning candle on our crest are not decoration —
-        they are the oath, repeated in front of every new intake.
+        The Dinajpur Zilla School Scout Group — also known as the DZS Scout Group,
+        DZS Scout or DZSSG — has trained young citizens in character, craft and
+        community for over five decades. The white lotus, the open book and the
+        burning candle on our crest are not decoration — they are the oath,
+        repeated in front of every new intake.
       </p>
       <div class="hero__cta">
         <button class="btn btn--gold btn--lg" id="heroSignup">Join the Group</button>
         <button class="btn btn--outline btn--lg" data-goto="leaders">Meet the Leaders</button>
       </div>
     </div>
+  </section>
+
+  <section class="seo-about" aria-labelledby="seo-about-title">
+    <span class="section-title__no">About DZS</span>
+    <h2 id="seo-about-title">Dinajpur Zilla School Scout Group</h2>
+    <p>
+      Dinajpur Zilla School Scout Group (DZS Scout Group, DZS Scout, DZSSG) is the
+      scout group associated with Dinajpur Zilla School in Dinajpur, Bangladesh.
+      This website provides group information, leadership, promotions, books and
+      resources, notices, membership services, attendance for administrators and
+      the Scout Group shop.
+    </p>
   </section>
 
   <section class="ledger" aria-label="Group ledger">
@@ -248,18 +297,25 @@
 <section class="panel admin-only" id="panel-attendance" data-panel="attendance" hidden>
   <div class="panel-head panel-head--row">
     <div>
-      <h1><span class="section-title__no">Admin</span>Attendance &amp; Biometric Check-in</h1>
-      <p>Only the verified site administrator can see registered members, set their device biometric, record attendance, and generate the monthly PDF sheet.</p>
+      <h1><span class="section-title__no">Admin</span>Attendance Management</h1>
+      <p>Only the verified site administrator can manage attendance and generate monthly or yearly attendance PDFs.</p>
     </div>
     <div class="attendance-head-actions">
       <button class="btn btn--outline" id="refreshAttendanceBtn">Refresh</button>
-      <button class="btn btn--gold" id="startAttendanceBtn">Attendance</button>
+      <label class="attendance-period-select">
+        <span>PDF period</span>
+        <select id="attendancePdfPeriod" aria-label="PDF period">
+          <option value="month">Month</option>
+          <option value="year">Year</option>
+        </select>
+        <input id="attendancePdfYear" class="attendance-year-input" type="number" inputmode="numeric" min="2000" max="2100" step="1" aria-label="PDF year" hidden>
+      </label>
       <button class="btn btn--gold" id="generateAttendancePdfBtn">Generate PDF</button>
     </div>
   </div>
 
   <div class="admin-note">
-    <strong>Fingerprint setup is device/browser based.</strong> The fingerprint prompt is supplied by the operating system/browser (for example Windows Hello or Android biometric authentication). No fingerprint image is stored by this website.
+    <strong>Manual attendance.</strong> Click the Attendance button on a member's row to mark that member present for today's date. The system does not use fingerprints or device biometric registration.
   </div>
 
   <div class="attendance-summary" id="attendanceSummary"></div>
@@ -275,7 +331,7 @@
           <th>Class</th>
           <th>Roll</th>
           <th>Member Type</th>
-          <th>Fingerprint Setup</th>
+          <th>Attendance</th>
           <th>Current Status</th>
         </tr>
       </thead>
@@ -520,24 +576,6 @@
         <button type="submit" class="btn btn--gold" id="shopSubmit">Save Product</button>
       </div>
     </form>
-  </div>
-</div>
-
-<!-- ===== Fingerprint / WebAuthn dialog ===== -->
-<div class="modal-overlay" id="biometricOverlay">
-  <div class="modal biometric-modal" role="dialog" aria-modal="true" aria-labelledby="biometricTitle">
-    <button class="modal__close" id="biometricClose" aria-label="Close">×</button>
-    <div class="biometric-icon" aria-hidden="true">●</div>
-    <h2 class="modal__title" id="biometricTitle">Fingerprint Attendance</h2>
-    <p class="modal__subtitle" id="biometricSubtitle">Ready for any registered member</p>
-    <div class="biometric-screen">
-      <div class="biometric-ring" id="biometricRing">
-        <div class="biometric-ring__inner">⌁</div>
-      </div>
-      <p id="biometricMessage">Anyone with a registered fingerprint can check in here. The system will identify the matching member automatically.</p>
-    </div>
-    <div class="biometric-user" id="biometricUser"></div>
-    <p class="biometric-auto-note">The device fingerprint prompt starts automatically.</p>
   </div>
 </div>
 

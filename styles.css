@@ -539,6 +539,9 @@ a:focus-visible, button:focus-visible, input:focus-visible{ outline:2px solid va
   font-size:13px; line-height:1.65;
 }
 .attendance-head-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+.attendance-period-select{ display:flex; align-items:center; gap:7px; padding:0 8px; color:var(--cream-dim); font:700 11px var(--font-mono); letter-spacing:.03em; text-transform:uppercase; }
+.attendance-period-select select,.attendance-year-input{ background:rgba(18,58,41,0.7); color:var(--cream); border:1px solid rgba(201,162,75,0.35); border-radius:8px; padding:9px 10px; font:600 12px var(--font-body); }
+.attendance-year-input{ width:88px; }
 .attendance-summary{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
 .attendance-stat{
   padding:18px 20px; border:1px solid rgba(201,162,75,0.18); border-radius:var(--radius-m);
@@ -638,3 +641,26 @@ select{ width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba
 @media (max-width:640px){ .member-type-options{ grid-template-columns:1fr; } }
 
 .biometric-auto-note{ margin:14px 0 0; color:var(--gold-bright); font:700 11px var(--font-mono); letter-spacing:.04em; text-transform:uppercase; }
+
+/* ==========================================================
+   SEO ABOUT BLOCK
+   ========================================================== */
+.seo-about{
+  background:linear-gradient(180deg, rgba(18,58,41,0.46), rgba(10,35,25,0.28));
+  border:1px solid rgba(201,162,75,0.18);
+  border-radius:var(--radius-m);
+  padding:28px 32px;
+  margin:0 0 48px;
+}
+.seo-about h2{
+  font-family:var(--font-display);
+  font-size:clamp(22px,2.5vw,30px);
+  margin:8px 0 10px;
+}
+.seo-about p{
+  color:var(--cream-dim);
+  font-size:14.5px;
+  line-height:1.75;
+  max-width:900px;
+  margin:0;
+}
