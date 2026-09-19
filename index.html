@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dinajpur Zilla School Scout Group (DZS Scout / DZSSG) | Dinajpur, Bangladesh</title>
+<meta name="description" content="Official website of Dinajpur Zilla School Scout Group, also known as DZS Scout Group, DZS Scout and DZSSG, in Dinajpur, Bangladesh. Group leadership, promotions, books, notices, membership, attendance and shop.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://dzsscoutgroup.eu.org/">
+<meta name="author" content="Dinajpur Zilla School Scout Group">
+<meta name="application-name" content="DZS Scout Group">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Dinajpur Zilla School Scout Group (DZS Scout / DZSSG)">
+<meta property="og:description" content="Official website of Dinajpur Zilla School Scout Group (DZS Scout / DZSSG), Dinajpur, Bangladesh.">
+<meta property="og:url" content="https://dzsscoutgroup.eu.org/">
+<meta property="og:image" content="https://dzsscoutgroup.eu.org/assets/logo.png">
+<meta property="og:site_name" content="Dinajpur Zilla School Scout Group">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Dinajpur Zilla School Scout Group (DZS Scout / DZSSG)">
+<meta name="twitter:description" content="Official website of Dinajpur Zilla School Scout Group (DZS Scout / DZSSG), Dinajpur, Bangladesh.">
+<meta name="twitter:image" content="https://dzsscoutgroup.eu.org/assets/logo.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Dinajpur Zilla School Scout Group",
+  "alternateName": [
+    "DZS Scout Group",
+    "DZS Scout",
+    "DZSSG",
+    "DZS"
+  ],
+  "url": "https://dzsscoutgroup.eu.org/",
+  "logo": "https://dzsscoutgroup.eu.org/assets/logo.png",
+  "address": {
+    "@type": "PostalAddress",
+    "addressLocality": "Dinajpur",
+    "addressCountry": "BD"
+  }
+}
+</script>
+
+<link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="styles.css">
+
+<!-- Firebase (free/no-Storage setup): Auth + Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+<!-- ===== Ambient badge-ring background ===== -->
+<div class="bg-rings" aria-hidden="true">
+  <div class="ring ring-a"></div>
+  <div class="ring ring-b"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ===== Top bar ===== -->
+<header class="topbar">
+  <div class="topbar__inner">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Dinajpur Zilla School Scout Group crest" class="brand__crest">
+      <div class="brand__text">
+        <span class="brand__name">Dinajpur Zilla School<br>Scout Group</span>
+        <span class="brand__est">ESTD. 1972 &nbsp;·&nbsp; দিনাজপুর জিলা স্কাউট গ্রুপ</span>
+      </div>
+    </div>
+
+    <nav class="tabs" id="tabs" aria-label="Primary">
+      <button class="tab is-active" data-tab="home">Home</button>
+      <button class="tab" data-tab="leaders">Leaders</button>
+      <button class="tab" data-tab="promotions">Promotions</button>
+      <button class="tab" data-tab="books">Books</button>
+      <button class="tab" data-tab="leaks">Leaks</button>
+      <button class="tab admin-only" data-tab="attendance" hidden>Attendance</button>
+      <button class="tab" data-tab="shop">Shop</button>
+    </nav>
+
+    <div class="auth-actions" id="authActionsLoggedOut">
+      <button class="btn btn--ghost" id="openLogin">Log in</button>
+      <button class="btn btn--gold" id="openSignup">Sign up</button>
+    </div>
+
+    <div class="auth-actions user-pill" id="authActionsLoggedIn" hidden>
+      <button class="user-profile-trigger" id="userProfileTrigger" type="button" title="Open profile">
+        <span class="user-pill__badge" id="userPillBadge">A</span>
+        <img class="user-pill__avatar" id="userPillAvatar" alt="Profile picture" hidden>
+        <span class="user-pill__name" id="userPillName">Admin</span>
+      </button>
+      <button class="btn btn--ghost" id="logoutBtn">Log out</button>
+    </div>
+
+    <button class="mobile-profile-trigger" id="mobileProfileTrigger" type="button" aria-label="Open profile" title="Open profile" hidden>
+      <span class="mobile-profile-trigger__badge" id="mobileProfileBadge">A</span>
+      <img class="mobile-profile-trigger__avatar" id="mobileProfileAvatar" alt="Profile picture" hidden>
+    </button>
+
+    <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <!-- mobile drawer -->
+  <div class="mobile-drawer" id="mobileDrawer">
+    <button class="tab" data-tab="home">Home</button>
+    <button class="tab" data-tab="leaders">Leaders</button>
+    <button class="tab" data-tab="promotions">Promotions</button>
+    <button class="tab" data-tab="books">Books</button>
+    <button class="tab" data-tab="leaks">Leaks</button>
+    <button class="tab admin-only" data-tab="attendance" hidden>Attendance</button>
+    <button class="tab" data-tab="shop">Shop</button>
+    <div class="mobile-drawer__auth" id="mobileAuthLoggedOut">
+      <button class="btn btn--ghost" id="openLoginMobile">Log in</button>
+      <button class="btn btn--gold" id="openSignupMobile">Sign up</button>
+    </div>
+    <div class="mobile-drawer__auth" id="mobileAuthLoggedIn" hidden>
+      <button class="user-profile-trigger user-profile-trigger--mobile" id="userProfileTriggerMobile" type="button">
+        <span class="user-pill__badge" id="userPillBadgeMobile">A</span>
+        <img class="user-pill__avatar" id="userPillAvatarMobile" alt="Profile picture" hidden>
+        <span class="user-pill__name" id="userPillNameMobile">Admin</span>
+      </button>
+      <button class="btn btn--ghost" id="logoutBtnMobile">Log out</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- =========================================================
+     HOME
+========================================================= -->
+<section class="panel is-active" id="panel-home" data-panel="home">
+
+  <section class="hero">
+    <div class="hero__medallion">
+      <div class="medallion-ring"></div>
+      <img src="assets/logo.png" alt="Group crest — lotus, book and flame" class="hero__logo">
+    </div>
+
+    <div class="hero__copy">
+      <span class="eyebrow">Bangladesh Scouts &nbsp;·&nbsp; Dinajpur District</span>
+      <h1>Purity. Knowledge.<br>Service to the Flame.</h1>
+      <p class="hero__lede">
+        The Dinajpur Zilla School Scout Group — also known as the DZS Scout Group,
+        DZS Scout or DZSSG — has trained young citizens in character, craft and
+        community for over five decades. The white lotus, the open book and the
+        burning candle on our crest are not decoration — they are the oath,
+        repeated in front of every new intake.
+      </p>
+      <div class="hero__cta">
+        <button class="btn btn--gold btn--lg" id="heroSignup">Join the Group</button>
+        <button class="btn btn--outline btn--lg" data-goto="leaders">Meet the Leaders</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="seo-about" aria-labelledby="seo-about-title">
+    <span class="section-title__no">About DZS</span>
+    <h2 id="seo-about-title">Dinajpur Zilla School Scout Group</h2>
+    <p>
+      Dinajpur Zilla School Scout Group (DZS Scout Group, DZS Scout, DZSSG) is the
+      scout group associated with Dinajpur Zilla School in Dinajpur, Bangladesh.
+      This website provides group information, leadership, promotions, books and
+      resources, notices, membership services, attendance for administrators and
+      the Scout Group shop.
+    </p>
+  </section>
+
+  <section class="ledger" aria-label="Group ledger">
+    <div class="ledger__item">
+      <span class="ledger__value">1972</span>
+      <span class="ledger__label">Year Founded</span>
+    </div>
+    <div class="ledger__div" aria-hidden="true"></div>
+    <div class="ledger__item">
+      <span class="ledger__value">50+</span>
+      <span class="ledger__label">Years of Service</span>
+    </div>
+    <div class="ledger__div" aria-hidden="true"></div>
+    <div class="ledger__item">
+      <span class="ledger__value">3</span>
+      <span class="ledger__label">Core Tenets</span>
+    </div>
+    <div class="ledger__div" aria-hidden="true"></div>
+    <div class="ledger__item">
+      <span class="ledger__value">WOSM</span>
+      <span class="ledger__label">World Affiliation</span>
+    </div>
+  </section>
+
+  <section class="tenets">
+    <h2 class="section-title"><span class="section-title__no">The Crest</span>Three Symbols, One Oath</h2>
+    <div class="tenets__grid">
+      <article class="tenet-card">
+        <div class="tenet-card__glyph tenet-card__glyph--lotus">✿</div>
+        <h3>The White Lotus</h3>
+        <p>Purity of intent. A scout keeps a clean word and a clean conscience, in the troop and out of it.</p>
+      </article>
+      <article class="tenet-card">
+        <div class="tenet-card__glyph tenet-card__glyph--book">📖</div>
+        <h3>The Open Book</h3>
+        <p>Knowledge, kept open. Every badge is a small proof of something learned properly, not memorised.</p>
+      </article>
+      <article class="tenet-card">
+        <div class="tenet-card__glyph tenet-card__glyph--flame">🕯</div>
+        <h3>The Burning Candle</h3>
+        <p>Service that costs something. The candle gives light by spending itself — so does a scout.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <div class="cta-band__text">
+      <h2>Registration for the 1972 Batch of Tomorrow opens each March.</h2>
+      <p>Sign up for a group account to track badge progress, camp schedules and troop notices.</p>
+    </div>
+    <button class="btn btn--gold btn--lg" data-goto="signup">Create an account</button>
+  </section>
+
+</section>
+
+<!-- =========================================================
+     LEADERS
+========================================================= -->
+<section class="panel" id="panel-leaders" data-panel="leaders">
+  <div class="panel-head panel-head--row">
+    <div>
+      <h1><span class="section-title__no">Roster</span>Group Leadership</h1>
+      <p>The committee currently steering the troop. Roles rotate with each scouting term — this roster reflects the acting bench and can be updated by group administrators.</p>
+    </div>
+    <button class="btn btn--gold admin-only" data-add="leaders" hidden>+ New Post</button>
+  </div>
+
+  <div class="posts-grid" id="grid-leaders" data-section="leaders"></div>
+</section>
+
+<!-- =========================================================
+     PROMOTIONS
+========================================================= -->
+<section class="panel" id="panel-promotions" data-panel="promotions">
+  <div class="panel-head panel-head--row">
+    <div>
+      <h1><span class="section-title__no">Rank Ladder</span>Promotions</h1>
+      <p>Advancement follows the national Bangladesh Scouts rank structure. Each rung below is a tested, examined step — not a birthday gift.</p>
+    </div>
+    <button class="btn btn--gold admin-only" data-add="promotions" hidden>+ New Post</button>
+  </div>
+
+  <div class="posts-grid" id="grid-promotions" data-section="promotions"></div>
+</section>
+
+<!-- =========================================================
+     BOOKS
+========================================================= -->
+<section class="panel" id="panel-books" data-panel="books">
+  <div class="panel-head panel-head--row">
+    <div>
+      <h1><span class="section-title__no">Library</span>Books &amp; Resources</h1>
+      <p>Handbooks, badge syllabi and field references kept in the troop store. Physical copies are held at the school scout room; digital references are linked where available.</p>
+    </div>
+    <button class="btn btn--gold admin-only" data-add="books" hidden>+ New Post</button>
+  </div>
+
+  <div class="posts-grid" id="grid-books" data-section="books"></div>
+</section>
+
+<!-- =========================================================
+     LEAKS
+========================================================= -->
+<section class="panel" id="panel-leaks" data-panel="leaks">
+  <div class="panel-head panel-head--row">
+    <div>
+      <h1><span class="section-title__no">Bulletin</span>Leaks &amp; Field Notes</h1>
+      <p>Unofficial chatter, early word on camps, and notices that haven't made it to the noticeboard yet. Read for a laugh; confirm with a leader before you act on any of it.</p>
+    </div>
+    <button class="btn btn--gold admin-only" data-add="leaks" hidden>+ New Post</button>
+  </div>
+
+  <div class="posts-grid posts-grid--feed" id="grid-leaks" data-section="leaks"></div>
+
+  <p class="leaks-disclaimer">This board is maintained informally by senior scouts. Nothing here is an official group communication.</p>
+</section>
+
+<!-- =========================================================
+     ADMIN ATTENDANCE
+========================================================= -->
+<section class="panel admin-only" id="panel-attendance" data-panel="attendance" hidden>
+  <div class="panel-head panel-head--row">
+    <div>
+      <h1><span class="section-title__no">Admin</span>Attendance Management</h1>
+      <p>Only the verified site administrator can manage attendance and generate monthly or yearly attendance PDFs.</p>
+    </div>
+    <div class="attendance-head-actions">
+      <button class="btn btn--outline" id="refreshAttendanceBtn">Refresh</button>
+      <label class="attendance-period-select">
+        <span>PDF period</span>
+        <select id="attendancePdfPeriod" aria-label="PDF period">
+          <option value="month">Month</option>
+          <option value="year">Year</option>
+        </select>
+        <input id="attendancePdfYear" class="attendance-year-input" type="number" inputmode="numeric" min="2000" max="2100" step="1" aria-label="PDF year" hidden>
+      </label>
+      <button class="btn btn--gold" id="generateAttendancePdfBtn">Generate PDF</button>
+    </div>
+  </div>
+
+  <div class="admin-note">
+    <strong>Manual attendance.</strong> Click the Attendance button on a member's row to mark that member present for today's date. The system does not use fingerprints or device biometric registration.
+  </div>
+
+  <div class="attendance-summary" id="attendanceSummary"></div>
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Profile</th>
+          <th>Name</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Mobile</th>
+          <th>Class</th>
+          <th>Roll</th>
+          <th>Member Type</th>
+          <th>Attendance</th>
+          <th>Current Status</th>
+        </tr>
+      </thead>
+      <tbody id="usersTableBody"></tbody>
+    </table>
+  </div>
+  <div class="posts-empty" id="attendanceEmpty" hidden>No registered accounts found.</div>
+</section>
+
+<!-- =========================================================
+     SHOP
+========================================================= -->
+<section class="panel" id="panel-shop" data-panel="shop">
+  <div class="panel-head panel-head--row">
+    <div>
+      <h1><span class="section-title__no">Store</span>Scout Group Shop</h1>
+      <p>Items published by the group administrator. Prices are shown in Bangladeshi Taka.</p>
+    </div>
+    <button class="btn btn--gold admin-only" id="addShopProductBtn" hidden>+ Add Product</button>
+  </div>
+  <div class="shop-grid" id="shopGrid"></div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="site-footer__top">
+    <div class="site-footer__brand">
+      <img src="assets/logo.png" alt="Group crest" class="site-footer__crest">
+      <div>
+        <strong>Dinajpur Zilla School Scout Group</strong>
+        <span>Estd. 1972 &nbsp;·&nbsp; Dinajpur, Bangladesh</span>
+      </div>
+    </div>
+    <div class="site-footer__affiliations">
+      <span>Affiliated with</span>
+      <div class="aff-badges">
+        <div class="aff-badge">BS</div>
+        <div class="aff-badge">WOSM</div>
+      </div>
+    </div>
+  </div>
+  <div class="site-footer__bottom">
+    <span>© 2026 Dinajpur Zilla School Scout Group. All rights reserved.</span>
+    <span class="site-footer__motto">Purity · Knowledge · Service</span>
+  </div>
+</footer>
+
+<!-- ===== Auth Modal ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal__close" id="modalClose" aria-label="Close">×</button>
+
+    <div class="modal__crest">
+      <img src="assets/logo.png" alt="">
+    </div>
+
+    <div class="modal__switch">
+      <button class="modal__switch-btn is-active" data-authtab="login" id="modalTitle">Log in</button>
+      <button class="modal__switch-btn" data-authtab="signup">Sign up</button>
+    </div>
+
+    <form class="auth-form is-active" id="loginForm" data-form="login">
+      <label>Email or Scout ID
+        <input type="text" name="identifier" placeholder="you@dinajpurscouts.org" required>
+      </label>
+      <label>Password
+        <input type="password" name="password" placeholder="••••••••" required>
+      </label>
+      <button type="submit" class="btn btn--gold btn--full">Log in</button>
+      <p class="auth-form__hint">New here? <button type="button" class="linklike" data-authtab="signup">Create an account</button></p>
+    </form>
+
+    <form class="auth-form" id="signupForm" data-form="signup">
+      <label>Full name
+        <input type="text" name="fullname" placeholder="Your name" required>
+      </label>
+      <label>Email
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </label>
+      <label>Username
+        <input type="text" name="username" placeholder="Choose a username" required>
+      </label>
+      <label>Mobile number
+        <input type="tel" name="mobile" placeholder="01XXXXXXXXX" required>
+      </label>
+      <label>Class
+        <input type="text" name="className" placeholder="e.g. 9 / Ten" required>
+      </label>
+      <label>Roll number
+        <input type="text" name="roll" placeholder="e.g. 12" required>
+      </label>
+      <fieldset class="member-type-fieldset">
+        <legend>Member type <span class="req">*</span> <span class="optional">Choose 1 to 3</span></legend>
+        <div class="member-type-options" id="signupMemberTypes">
+          <label class="member-type-option"><input type="checkbox" name="memberTypes" value="P.S"><span>1. P.S</span></label>
+          <label class="member-type-option"><input type="checkbox" name="memberTypes" value="C.D"><span>2. C.D</span></label>
+          <label class="member-type-option"><input type="checkbox" name="memberTypes" value="S.P.L"><span>3. S.P.L</span></label>
+          <label class="member-type-option"><input type="checkbox" name="memberTypes" value="P.L"><span>4. P.L</span></label>
+          <label class="member-type-option"><input type="checkbox" name="memberTypes" value="A.P.L"><span>5. A.P.L</span></label>
+          <label class="member-type-option"><input type="checkbox" name="memberTypes" value="MEMBER"><span>6. MEMBER</span></label>
+        </div>
+        <small class="field-hint">Select at least 1 and no more than 3.</small>
+      </fieldset>
+      <label>Password
+        <input type="password" name="password" placeholder="Create a password" required minlength="6">
+      </label>
+      <button type="submit" class="btn btn--gold btn--full">Create account</button>
+      <p class="auth-form__hint">We'll send a verification link to your email.</p>
+      <p class="auth-form__hint">Already registered? <button type="button" class="linklike" data-authtab="login">Log in</button></p>
+    </form>
+  </div>
+</div>
+
+<!-- ===== User Profile Modal ===== -->
+<div class="modal-overlay" id="profileOverlay">
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <button class="modal__close" id="profileModalClose" aria-label="Close">×</button>
+    <div class="profile-modal__head">
+      <div class="profile-avatar-large" id="profileAvatarPreview">U</div>
+      <div>
+        <h2 class="modal__title" id="profileModalTitle">My Profile</h2>
+        <p class="modal__subtitle">Update your group account details.</p>
+      </div>
+    </div>
+    <form class="post-form" id="profileForm">
+      <label>Full name
+        <input type="text" id="profileFullname" required>
+      </label>
+      <label>Username
+        <input type="text" id="profileUsername" required>
+      </label>
+      <label>Mobile number
+        <input type="tel" id="profileMobile" required>
+      </label>
+      <label>Class
+        <input type="text" id="profileClass" required>
+      </label>
+      <label>Roll number
+        <input type="text" id="profileRoll" required>
+      </label>
+      <fieldset class="member-type-fieldset">
+        <legend>Member type <span class="req">*</span> <span class="optional">Choose 1 to 3</span></legend>
+        <div class="member-type-options" id="profileMemberTypes">
+          <label class="member-type-option"><input type="checkbox" name="profileMemberTypes" value="P.S"><span>1. P.S</span></label>
+          <label class="member-type-option"><input type="checkbox" name="profileMemberTypes" value="C.D"><span>2. C.D</span></label>
+          <label class="member-type-option"><input type="checkbox" name="profileMemberTypes" value="S.P.L"><span>3. S.P.L</span></label>
+          <label class="member-type-option"><input type="checkbox" name="profileMemberTypes" value="P.L"><span>4. P.L</span></label>
+          <label class="member-type-option"><input type="checkbox" name="profileMemberTypes" value="A.P.L"><span>5. A.P.L</span></label>
+          <label class="member-type-option"><input type="checkbox" name="profileMemberTypes" value="MEMBER"><span>6. MEMBER</span></label>
+        </div>
+        <small class="field-hint">Select at least 1 and no more than 3.</small>
+      </fieldset>
+      <label>Profile picture URL <span class="optional">(optional)</span>
+        <input type="url" id="profileImageURL" placeholder="https://example.com/photo.jpg">
+      </label>
+      <label>Or upload profile picture <span class="optional">(stored in Realtime Database, compressed)</span>
+        <input type="file" id="profileImageFile" accept="image/*">
+      </label>
+      <div class="profile-help">For the free Realtime Database version, uploaded profile pictures are resized and compressed before being stored as image data in your user record. Keep the picture reasonably small.</div>
+      <div class="post-form__actions">
+        <button type="button" class="btn btn--ghost" id="profileCancel">Cancel</button>
+        <button type="submit" class="btn btn--gold" id="profileSave">Save Profile</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Post Editor Modal (admin only) ===== -->
+<div class="modal-overlay" id="postOverlay">
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
+    <button class="modal__close" id="postModalClose" aria-label="Close">×</button>
+    <h2 class="modal__title" id="postModalTitle">New Post</h2>
+    <p class="modal__subtitle" id="postModalSubtitle">Leaders</p>
+
+    <form class="post-form" id="postForm">
+      <input type="hidden" id="postId" name="postId">
+      <input type="hidden" id="postSection" name="postSection">
+
+      <label>Name <span class="req">*</span>
+        <input type="text" id="postName" name="postName" placeholder="e.g. Rezaul Alam" required>
+      </label>
+
+      <label>Description <span class="req">*</span>
+        <textarea id="postDescription" name="postDescription" rows="4" placeholder="Short description..." required></textarea>
+      </label>
+
+      <div class="field-block">
+        <div class="field-block__head">
+          <span>Image URL <span class="optional">(optional)</span></span>
+        </div>
+        <input type="url" id="postImageLink" placeholder="https://example.com/photo.jpg">
+      </div>
+
+      <div class="field-block">
+        <div class="field-block__head">
+          <span>PDF URL <span class="optional">(optional)</span></span>
+        </div>
+        <input type="url" id="postPdfLink" placeholder="https://example.com/handbook.pdf">
+      </div>
+
+      <div class="field-block">
+        <div class="field-block__head">
+          <span>Video URL <span class="optional">(optional)</span></span>
+        </div>
+        <input type="url" id="postVideoLink" placeholder="https://www.youtube.com/watch?v=...">
+      </div>
+
+      <div class="post-form__actions">
+        <button type="button" class="btn btn--ghost" id="postCancel">Cancel</button>
+        <button type="submit" class="btn btn--gold" id="postSubmit">Save Post</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===== Shop Product Modal (admin only) ===== -->
+<div class="modal-overlay" id="shopOverlay">
+  <div class="modal modal--wide" role="dialog" aria-modal="true" aria-labelledby="shopModalTitle">
+    <button class="modal__close" id="shopModalClose" aria-label="Close">×</button>
+    <h2 class="modal__title" id="shopModalTitle">Add Product</h2>
+    <p class="modal__subtitle">Shop</p>
+    <form class="post-form" id="shopForm">
+      <input type="hidden" id="shopProductId">
+      <label>Product name <span class="req">*</span>
+        <input type="text" id="shopProductName" required placeholder="Scout scarf">
+      </label>
+      <label>Price (BDT) <span class="req">*</span>
+        <input type="number" id="shopProductPrice" required min="0" step="0.01" placeholder="350">
+      </label>
+      <label>Stock <span class="optional">(optional)</span>
+        <input type="number" id="shopProductStock" min="0" step="1" placeholder="10">
+      </label>
+      <label>Description <span class="req">*</span>
+        <textarea id="shopProductDescription" rows="4" required placeholder="Short product description..."></textarea>
+      </label>
+      <label>Image URL <span class="optional">(optional)</span>
+        <input type="url" id="shopProductImage" placeholder="https://example.com/item.jpg">
+      </label>
+      <div class="post-form__actions">
+        <button type="button" class="btn btn--ghost" id="shopCancel">Cancel</button>
+        <button type="submit" class="btn btn--gold" id="shopSubmit">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="setup-banner" id="setupBanner" hidden>
+  ⚠️ Firebase isn't configured yet — running in read-only preview mode. Open <code>firebase-config.js</code> and follow <code>SETUP.md</code> to turn on real login and Realtime Database.
+</div>
+<div class="setup-banner setup-banner--verify" id="verifyBanner" hidden>
+  ✉️ Your admin account isn't verified yet, so saves will be rejected. Check your inbox for the verification link, then
+  <button type="button" class="linklike linklike--light" id="refreshVerifyBtn">I've verified — refresh</button>
+  or
+  <button type="button" class="linklike linklike--light" id="resendVerifyBtn">resend the email</button>.
+</div>
+
+<script src="firebase-config.js"></script>
+<!-- PDF export for the admin attendance sheet -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
